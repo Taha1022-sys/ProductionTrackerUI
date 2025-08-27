@@ -128,7 +128,7 @@ const ProductionView = () => {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Forma Sayısı</label>
+              <label>Formacı Sayısı</label>
               <input
                 type="text"
                 value={entry.formCount}
@@ -339,6 +339,23 @@ const ProductionView = () => {
             </div>
           </div>
         </div>
+
+
+        {entry.note && (
+          <div className="form-section">
+            <h3>Kayıt Notu</h3>
+            <div className="form-row">
+              <div className="form-group" style={{width: '100%'}}>
+                <textarea
+                  value={entry.note}
+                  readOnly
+                  className="readonly-input"
+                  style={{minHeight: 80, resize: 'vertical', background: '#f6f8fa'}}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {entry.photoPath && (
           <div className="form-section">

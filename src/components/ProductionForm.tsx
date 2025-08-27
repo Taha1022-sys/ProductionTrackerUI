@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { productionApi } from '../services/api';
-import type { ProductionEntryDto } from '../services/api';
+import type { ProductionEntryDto, ProductionEntryUpdateDto, EditabilityCheckDto } from '../services/api';
 import './ProductionForm.css';
 
 interface ProductionFormProps {
-  onEntryCreated: () => void;
+  onEntryCreated?: () => void;
+  editMode?: boolean;
+  entryId?: number;
+  onEntryUpdated?: () => void;
 }
 
-const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
-  const [formData, setFormData] = useState<ProductionEntryDto>({
-    date: new Date().toISOString().split('T')[0],
+const ProductionForm = ({ onEntryCreated, editMode = false, entryId, onEntryUpdated }: ProductionFormProps) => {
+  const todayDate = new Date().toISOString().split('T')[0];
+  
+  const [formData, setFormData] = useState<ProductionEntryDto & { note?: string }>({
+    date: todayDate,
     machineNo: '',
     mkCycleSpeed: 0,
     shift: 1,
@@ -30,21 +35,131 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
     otherDefect: 0,
     remainingOnTableCount: undefined,
     countTakenFromTable: 0,
+    note: '',
   });
 
   const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [editabilityInfo, setEditabilityInfo] = useState<EditabilityCheckDto | null>(null);
+  const [deleteCurrentPhoto, setDeleteCurrentPhoto] = useState(false);
+  const [currentPhotoPath, setCurrentPhotoPath] = useState<string>('');
+  const [entryCreatedAt, setEntryCreatedAt] = useState<string>('');
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Kalan süreyi hesapla
+  const calculateTimeRemaining = (createdAt: string) => {
+    const created = new Date(createdAt);
+    const now = new Date();
+    const oneHourLater = new Date(created.getTime() + 60 * 60 * 1000); // 1 saat ekle
+    
+    if (now >= oneHourLater) {
+      return 'Süre doldu';
+    }
+    
+    const remainingMs = oneHourLater.getTime() - now.getTime();
+    const remainingMinutes = Math.floor(remainingMs / (1000 * 60));
+    const remainingSeconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+    
+    return `${remainingMinutes} dakika ${remainingSeconds} saniye`;
+  };
+
+  // Gerçek zamanlı süre güncelleme
+  useEffect(() => {
+    if (editMode && entryCreatedAt) {
+      const interval = setInterval(() => {
+        const remaining = calculateTimeRemaining(entryCreatedAt);
+        setTimeRemaining(remaining);
+        
+        // Süre dolduğunda editability'yi güncelle
+        if (remaining === 'Süre doldu' && editabilityInfo?.canEdit) {
+          setEditabilityInfo(prev => prev ? { ...prev, canEdit: false } : null);
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [editMode, entryCreatedAt, editabilityInfo?.canEdit]);
+
+  // Düzenleme modunda entry verilerini yükle
+  useEffect(() => {
+    const loadEntryForEdit = async () => {
+      try {
+        setLoading(true);
+        const entry = await productionApi.getEntryById(entryId!);
+        setFormData({
+          date: entry.date.split('T')[0], // ISO formatından sadece tarihi al
+          machineNo: entry.machineNo,
+          mkCycleSpeed: entry.mkCycleSpeed,
+          shift: entry.shift,
+          moldNo: entry.moldNo,
+          steam: entry.steam,
+          formCount: entry.formCount,
+          matchingPersonnelCount: entry.matchingPersonnelCount,
+          tablePersonnelCount: entry.tablePersonnelCount,
+          modelNo: entry.modelNo,
+          sizeNo: entry.sizeNo,
+          itemsPerPackage: entry.itemsPerPackage,
+          packagesPerBag: entry.packagesPerBag,
+          bagsPerBox: entry.bagsPerBox,
+          tableTotalPackage: entry.tableTotalPackage,
+          measurementError: entry.measurementError,
+          knittingError: entry.knittingError,
+          toeDefect: entry.toeDefect,
+          otherDefect: entry.otherDefect,
+          remainingOnTableCount: entry.remainingOnTableCount,
+          countTakenFromTable: entry.countTakenFromTable,
+        });
+        if (entry.photoPath) {
+          setCurrentPhotoPath(entry.photoPath);
+        }
+        // CreatedAt'i set et
+        setEntryCreatedAt(entry.createdAt);
+        // İlk kalan süreyi hesapla
+        setTimeRemaining(calculateTimeRemaining(entry.createdAt));
+      } catch (error) {
+        console.error('Entry yüklenirken hata:', error);
+        setMessage('Kayıt yüklenirken hata oluştu!');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const checkEditability = async () => {
+      try {
+        const info = await productionApi.checkEditability(entryId!);
+        setEditabilityInfo(info);
+        if (!info.canEdit) {
+          setMessage(`Bu kayıt düzenlenemez: ${info.editStatus}`);
+        }
+      } catch (error) {
+        console.error('Düzenleme kontrolü hatası:', error);
+        setMessage('Düzenleme kontrolü yapılamadı!');
+      }
+    };
+
+    const loadData = async () => {
+      if (editMode && entryId) {
+        await loadEntryForEdit();
+        await checkEditability();
+      }
+    };
+    loadData();
+  }, [editMode, entryId]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
-    // String olarak kalması gereken alanlar
+    if (name === 'date') {
+      return;
+    }
+    if (name === 'note') {
+      setFormData(prev => ({ ...prev, note: value }));
+      return;
+    }
     const stringFields = ['machineNo', 'sizeNo', 'date'];
-    
     setFormData(prev => ({
       ...prev,
-      [name]: stringFields.includes(name) 
+      [name]: stringFields.includes(name)
         ? value
         : value === '' ? undefined : Number(value)
     }));
@@ -64,7 +179,6 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
       console.log('Gönderilen form data:', formData);
       console.log('Seçilen foto:', selectedPhoto?.name);
       
-      // Boş alanları kontrol et
       const requiredFields = ['machineNo', 'sizeNo'];
       const missingFields = requiredFields.filter(field => !formData[field as keyof ProductionEntryDto]);
       
@@ -73,44 +187,61 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
         setLoading(false);
         return;
       }
-      
-      await productionApi.createEntry(formData, selectedPhoto || undefined);
-      setMessage('Veri başarıyla kaydedildi!');
-      
-      // Formu sıfırla
-      setFormData({
-        date: new Date().toISOString().split('T')[0],
-        machineNo: '',
-        mkCycleSpeed: 0,
-        shift: 1,
-        moldNo: 1,
-        steam: 0,
-        formCount: 1,
-        matchingPersonnelCount: 1,
-        tablePersonnelCount: 1,
-        modelNo: 1,
-        sizeNo: '',
-        itemsPerPackage: 1,
-        packagesPerBag: undefined,
-        bagsPerBox: undefined,
-        tableTotalPackage: 0,
-        measurementError: 0,
-        knittingError: 0,
-        toeDefect: 0,
-        otherDefect: 0,
-        remainingOnTableCount: undefined,
-        countTakenFromTable: 0,
-      });
 
-      // Foto seçimini sıfırla
-      setSelectedPhoto(null);
-      // File input'u da sıfırla
-      const photoInput = document.getElementById('photo') as HTMLInputElement;
-      if (photoInput) {
-        photoInput.value = '';
+      if (editMode && entryId) {
+        // Düzenleme işlemi - süre kontrolü
+        if (timeRemaining === 'Süre doldu') {
+          setMessage('Bu kayıt artık düzenlenemez: 1 saatlik düzenleme süresi dolmuştur.');
+          setLoading(false);
+          return;
+        }
+
+        const updateData: ProductionEntryUpdateDto = {
+          ...formData,
+          deleteCurrentPhoto: deleteCurrentPhoto
+        };
+        
+        await productionApi.updateEntry(entryId, updateData, selectedPhoto || undefined);
+        setMessage('Veri başarıyla güncellendi!');
+        onEntryUpdated?.();
+      } else {
+        // Yeni kayıt oluşturma
+        await productionApi.createEntry(formData, selectedPhoto || undefined);
+        setMessage('Veri başarıyla kaydedildi!');
+        onEntryCreated?.();
+        
+        // Formu sıfırla (sadece yeni kayıt modunda)
+        setFormData({
+          date: todayDate,
+          machineNo: '',
+          mkCycleSpeed: 0,
+          shift: 1,
+          moldNo: 1,
+          steam: 0,
+          formCount: 1,
+          matchingPersonnelCount: 1,
+          tablePersonnelCount: 1,
+          modelNo: 1,
+          sizeNo: '',
+          itemsPerPackage: 1,
+          packagesPerBag: undefined,
+          bagsPerBox: undefined,
+          tableTotalPackage: 0,
+          measurementError: 0,
+          knittingError: 0,
+          toeDefect: 0,
+          otherDefect: 0,
+          remainingOnTableCount: undefined,
+          countTakenFromTable: 0,
+          note: '',
+        });
+
+        setSelectedPhoto(null);
+        const photoInput = document.getElementById('photo') as HTMLInputElement;
+        if (photoInput) {
+          photoInput.value = '';
+        }
       }
-
-      onEntryCreated();
     } catch (error: unknown) {
       console.error('API Error:', error);
       
@@ -118,7 +249,6 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
         const axiosError = error as { response: { data: unknown } };
         console.error('Full Error response:', axiosError.response.data);
         
-        // Error detaylarını ayrı ayrı log'la
         const errorData = axiosError.response.data as { errors?: Record<string, string[]> };
         if (errorData.errors) {
           console.error('Validation errors:', errorData.errors);
@@ -139,7 +269,13 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
 
   return (
     <div className="production-form-container">
-      <h2>Üretim Veri Girişi</h2>
+      <h2>{editMode ? 'Üretim Verisi Düzenleme' : 'Üretim Veri Girişi'}</h2>
+      
+      {editMode && timeRemaining && (
+        <div className={`editability-info ${timeRemaining !== 'Süre doldu' ? 'can-edit' : 'cannot-edit'}`}>
+          <p><strong>Kalan Süre:</strong> {timeRemaining}</p>
+        </div>
+      )}
       
       {message && (
         <div className={`message ${message.includes('Hata') ? 'error' : 'success'}`}>
@@ -147,12 +283,12 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="production-form">
-        <div className="form-section">
+  <form onSubmit={handleSubmit} className="production-form">
+  <div className="form-section">
           <h3>Temel Bilgiler</h3>
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="date">Tarih *</label>
+              <label htmlFor="date">Tarih (Sabit - Bugün)</label>
               <input
                 type="date"
                 id="date"
@@ -160,19 +296,28 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
                 value={formData.date}
                 onChange={handleInputChange}
                 required
+                disabled
+                style={{ backgroundColor: '#f5f5f5', cursor: 'not-allowed' }}
               />
             </div>
             <div className="form-group">
               <label htmlFor="machineNo">Makine No *</label>
-              <input
-                type="text"
+              <select
                 id="machineNo"
                 name="machineNo"
                 value={formData.machineNo}
                 onChange={handleInputChange}
                 required
-                maxLength={10}
-              />
+              >
+                <option value="">Seçiniz</option>
+                <option value="A-1">A-1</option>
+                <option value="A-2">A-2</option>
+                <option value="A-3">A-3</option>
+                <option value="A-4">A-4</option>
+                <option value="T-1">T-1</option>
+                <option value="T-2">T-2</option>
+                <option value="T-3">T-3</option>
+              </select>
             </div>
             <div className="form-group">
               <label htmlFor="mkCycleSpeed">MK Cycle (Hız)</label>
@@ -229,7 +374,7 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="formCount">Forma Sayısı *</label>
+              <label htmlFor="formCount">Formacı Sayısı *</label>
               <input
                 type="number"
                 id="formCount"
@@ -242,27 +387,31 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
             </div>
             <div className="form-group">
               <label htmlFor="matchingPersonnelCount">Eşlemeci Sayısı *</label>
-              <input
-                type="number"
+              <select
                 id="matchingPersonnelCount"
                 name="matchingPersonnelCount"
                 value={formData.matchingPersonnelCount}
                 onChange={handleInputChange}
                 required
-                min="1"
-              />
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+              </select>
             </div>
             <div className="form-group">
               <label htmlFor="tablePersonnelCount">Masacı Sayısı *</label>
-              <input
-                type="number"
+              <select
                 id="tablePersonnelCount"
                 name="tablePersonnelCount"
                 value={formData.tablePersonnelCount}
                 onChange={handleInputChange}
                 required
-                min="1"
-              />
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+              </select>
             </div>
           </div>
 
@@ -293,15 +442,17 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
             </div>
             <div className="form-group">
               <label htmlFor="itemsPerPackage">Kaçlı Paket *</label>
-              <input
-                type="number"
+              <select
                 id="itemsPerPackage"
                 name="itemsPerPackage"
                 value={formData.itemsPerPackage}
                 onChange={handleInputChange}
                 required
-                min="1"
-              />
+              >
+                {Array.from({ length: 12 }, (_, i) => (
+                  <option key={i + 1} value={i + 1}>{i + 1}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -339,25 +490,6 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
                 required
                 min="0"
               />
-            </div>
-          </div>
-        </div>
-
-        <div className="form-section">
-          <h3>Fotoğraf (İsteğe Bağlı)</h3>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="photo">Üretim Fotoğrafı</label>
-              <input
-                type="file"
-                id="photo"
-                name="photo"
-                accept="image/*"
-                onChange={handlePhotoChange}
-              />
-              {selectedPhoto && (
-                <p className="photo-info">Seçilen dosya: {selectedPhoto.name}</p>
-              )}
             </div>
           </div>
         </div>
@@ -438,9 +570,89 @@ const ProductionForm = ({ onEntryCreated }: ProductionFormProps) => {
           </div>
         </div>
 
+        {editMode ? (
+          // Düzenleme modunda fotoğraf yönetimi
+          <div className="form-section">
+            <h3>Fotoğraf Yönetimi</h3>
+            {currentPhotoPath && !deleteCurrentPhoto && (
+              <div className="current-photo">
+                <p>Mevcut Fotoğraf:</p>
+                <img 
+                  src={productionApi.getPhotoUrl(currentPhotoPath)} 
+                  alt="Mevcut fotoğraf" 
+                  style={{ maxWidth: '400px', maxHeight: '300px', marginBottom: '10px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                />
+                <div>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={deleteCurrentPhoto}
+                      onChange={(e) => setDeleteCurrentPhoto(e.target.checked)}
+                    />
+                    Mevcut fotoğrafı sil
+                  </label>
+                </div>
+              </div>
+            )}
+            <div className="form-group">
+              <label htmlFor="photo">
+                Yeni Fotoğraf Yükle
+              </label>
+              <input
+                type="file"
+                id="photo"
+                name="photo"
+                accept="image/*"
+                onChange={handlePhotoChange}
+              />
+              {selectedPhoto && (
+                <p className="selected-file">Seçilen: {selectedPhoto.name}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          // Yeni kayıt modunda fotoğraf yükleme
+          <div className="form-section">
+            <h3>Fotoğraf (İsteğe Bağlı)</h3>
+            <div className="form-group">
+              <label htmlFor="photo">
+                Fotoğraf Yükle
+              </label>
+              <input
+                type="file"
+                id="photo"
+                name="photo"
+                accept="image/*"
+                onChange={handlePhotoChange}
+              />
+              {selectedPhoto && (
+                <p className="selected-file">Seçilen: {selectedPhoto.name}</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="form-section note-section">
+          <h3>Notunuz</h3>
+          <textarea
+            name="note"
+            value={formData.note}
+            onChange={handleInputChange}
+            placeholder="Buraya notunuzu yazabilirsiniz..."
+            rows={4}
+            className="note-textarea"
+          />
+        </div>
         <div className="form-actions">
-          <button type="submit" disabled={loading} className="submit-btn">
-            {loading ? 'Kaydediliyor...' : 'Kaydet'}
+          <button 
+            type="submit" 
+            disabled={loading || (editMode && timeRemaining === 'Süre doldu')} 
+            className="submit-btn"
+          >
+            {loading 
+              ? (editMode ? 'Güncelleniyor...' : 'Kaydediliyor...')
+              : (editMode ? 'Güncelle' : 'Kaydet')
+            }
           </button>
         </div>
       </form>

@@ -1,4 +1,3 @@
-/* Ana uygulama stilleri */
 * {
   margin: 0;
   padding: 0;
@@ -39,6 +38,12 @@ body {
   width: 100%;
 }
 
+.app-main.full-width {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -46,7 +51,16 @@ body {
   align-items: start;
 }
 
-/* Responsive tasarım */
+.dashboard-full {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+}
+
 @media (max-width: 1200px) {
   .dashboard {
     grid-template-columns: 1fr;
@@ -67,7 +81,6 @@ body {
   }
 }
 
-/* Genel buton stilleri */
 button {
   cursor: pointer;
   border: none;
@@ -83,7 +96,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Genel input stilleri */
 input, select {
   width: 100%;
   padding: 0.75rem;
@@ -99,7 +111,6 @@ input:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-/* Genel label stilleri */
 label {
   display: block;
   margin-bottom: 0.5rem;
@@ -107,7 +118,6 @@ label {
   color: #555;
 }
 
-/* Loading ve mesaj stilleri */
 .loading {
   text-align: center;
   padding: 2rem;

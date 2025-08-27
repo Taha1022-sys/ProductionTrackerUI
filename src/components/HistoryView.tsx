@@ -17,13 +17,11 @@ const HistoryView = () => {
     loadAllEntries();
   }, []);
 
-  // Tarih formatını doğru gönderme
   const formatDateForAPI = (date: string) => {
     if (!date) return '';
-    return new Date(date).toISOString().split('T')[0]; // YYYY-MM-DD formatı
+    return new Date(date).toISOString().split('T')[0]; 
   };
 
-  // Validasyon
   const validateTimeFilter = () => {
     if (startTime && endTime && startTime > endTime) {
       alert('Başlangıç saati bitiş saatinden küçük olmalıdır');
@@ -36,7 +34,29 @@ const HistoryView = () => {
     try {
       setLoading(true);
       const data = await productionApi.getAllEntries();
-      setEntries(data);
+      // Her entry için editability bilgisini al
+      const entriesWithEditInfo = await Promise.all(
+        data.map(async (entry) => {
+          try {
+            const editInfo = await productionApi.checkEditability(entry.id);
+            return {
+              ...entry,
+              canEdit: editInfo.canEdit,
+              timeRemainingForEdit: editInfo.timeRemainingForEdit,
+              editStatus: editInfo.editStatus
+            };
+          } catch (error) {
+            console.error(`Entry ${entry.id} editability check failed:`, error);
+            return {
+              ...entry,
+              canEdit: false,
+              timeRemainingForEdit: '',
+              editStatus: 'Kontrol edilemedi'
+            };
+          }
+        })
+      );
+      setEntries(entriesWithEditInfo);
     } catch (error) {
       console.error('Kayıtlar yüklenirken hata:', error);
     } finally {
@@ -72,7 +92,30 @@ const HistoryView = () => {
       
       const response = await fetch(`/api/production/entries/date-range?${params}`);
       const data = await response.json();
-      setEntries(data);
+      
+      // Her entry için editability bilgisini al
+      const entriesWithEditInfo = await Promise.all(
+        data.map(async (entry: ProductionEntry) => {
+          try {
+            const editInfo = await productionApi.checkEditability(entry.id);
+            return {
+              ...entry,
+              canEdit: editInfo.canEdit,
+              timeRemainingForEdit: editInfo.timeRemainingForEdit,
+              editStatus: editInfo.editStatus
+            };
+          } catch (error) {
+            console.error(`Entry ${entry.id} editability check failed:`, error);
+            return {
+              ...entry,
+              canEdit: false,
+              timeRemainingForEdit: '',
+              editStatus: 'Kontrol edilemedi'
+            };
+          }
+        })
+      );
+      setEntries(entriesWithEditInfo);
     } catch (error) {
       console.error('Filtreleme hatası:', error);
       alert('Filtreleme sırasında hata oluştu');
@@ -90,9 +133,13 @@ const HistoryView = () => {
   };
 
   const handleViewEntry = (id: number) => {
-    // Yeni sekmede görüntüleme sayfasını aç
     const viewUrl = `/view/${id}`;
     window.open(viewUrl, '_blank');
+  };
+
+  const handleEditEntry = (id: number) => {
+    const editUrl = `/edit/${id}`;
+    window.open(editUrl, '_blank');
   };
 
   if (loading) {
@@ -225,6 +272,16 @@ const HistoryView = () => {
                     >
                       Görüntüle
                     </button>
+                    {entry.canEdit && (
+                      <button 
+                        className="edit-btn"
+                        onClick={() => handleEditEntry(entry.id)}
+                        title={`Düzenle (${entry.timeRemainingForEdit} kaldı)`}
+                        style={{ marginLeft: '5px' }}
+                      >
+                        Düzenle
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
