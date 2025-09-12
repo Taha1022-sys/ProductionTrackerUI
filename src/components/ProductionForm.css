@@ -84,32 +84,10 @@
   font-weight: 500;
 }
 
-.current-photo {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background-color: #f8f9fa;
-  border-radius: 6px;
-}
-
-.current-photo img {
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.selected-file {
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-  color: #666;
-  font-style: italic;
-}
-  border-bottom: 2px solid #667eea;
-  padding-bottom: 0.5rem;
-}
-
 .production-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5re
+  gap: 1.5rem;
 }
 
 .form-section {
@@ -168,12 +146,12 @@
 .form-actions {
   display: flex;
   justify-content: center;
+  gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
-.submit-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.submit-btn, .preview-btn {
   padding: 1rem 3rem;
   border: none;
   border-radius: 8px;
@@ -181,45 +159,29 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-.submit-btn:hover:not(:disabled) {
+.submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.preview-btn {
+  background: linear-gradient(135deg, #20bf6b 0%, #01a3a4 100%);
+  color: white;
+  min-width: 140px;
+}
+
+.submit-btn:hover:not(:disabled), .preview-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
-.submit-btn:disabled {
+.submit-btn:disabled, .preview-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
-}
-
-.photo-info {
-  font-size: 0.85rem;
-  color: #666;
-  margin-top: 0.5rem;
-  font-style: italic;
-}
-
-.form-group input[type="file"] {
-  padding: 0.5rem;
-  border: 2px dashed #ddd;
-  border-radius: 6px;
-  background-color: #f9f9f9;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.form-group input[type="file"]:hover {
-  border-color: #667eea;
-  background-color: #f0f4ff;
-}
-
-.form-group input[type="file"]:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Responsive tasarım */
@@ -237,6 +199,14 @@
   .submit-btn {
     padding: 0.875rem 2rem;
     font-size: 1rem;
+  }
+  .preview-btn {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    min-width: 120px;
+  }
+  .form-actions {
+    gap: 0.75rem;
   }
   .form-group input,
   .form-group select {
@@ -265,6 +235,15 @@
     padding: 0.75rem 1.2rem;
     font-size: 0.95rem;
   }
+  .preview-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    min-width: 100px;
+  }
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 
 /* Disabled tarih alanı için özel stiller */
@@ -278,4 +257,225 @@
 .form-group input[type="date"]:disabled:hover {
   background-color: #f5f5f5 !important;
   border-color: #ddd !important;
+}
+
+/* Excel İşlemleri Stilları */
+.excel-actions {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+}
+
+.excel-info {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.excel-info p {
+  margin: 0;
+  font-size: 1rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.excel-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.excel-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.excel-btn:before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.download-btn:before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M12 16l-6-6h4V4h4v6h4l-6 6zm0 4c-4.42 0-8-3.58-8-8 0-1.1.9-2 2-2s2 .9 2 2c0 2.21 1.79 4 4 4s4-1.79 4-4c0-1.1.9-2 2-2s2 .9 2 2c0 4.42-3.58 8-8 8z'/%3E%3C/svg%3E");
+}
+
+.download-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #218838 0%, #1c7430 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.4);
+}
+
+.clear-btn {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.clear-btn:before {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z'/%3E%3C/svg%3E");
+}
+
+.clear-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+}
+
+.excel-btn:disabled {
+  background: #6c757d !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+  opacity: 0.6;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .production-form-container {
+    padding: 1rem;
+    margin: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .production-form-container h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .form-section {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .form-section h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .form-group input,
+  .form-group select {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 0.75rem;
+  }
+  
+  .form-group label {
+    font-size: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  
+  .submit-btn,
+  .preview-btn {
+    font-size: 0.9rem;
+    padding: 0.75rem 1.5rem;
+    margin: 0.25rem;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .editability-info {
+    padding: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  
+  .excel-actions {
+    padding: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .excel-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .excel-btn {
+    min-width: 100%;
+    max-width: 280px;
+  }
+  
+  .excel-info p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .production-form-container {
+    padding: 0.75rem;
+    margin: 0.25rem;
+  }
+  
+  .production-form-container h2 {
+    font-size: 1.2rem;
+  }
+  
+  .form-section {
+    padding: 0.75rem;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 0.6rem;
+  }
+  
+  .submit-btn,
+  .preview-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+  }
+  
+  .excel-actions {
+    padding: 0.75rem;
+    margin-top: 1rem;
+  }
+  
+  .excel-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Tablet responsiveness */
+@media (min-width: 481px) and (max-width: 1024px) {
+  .production-form-container {
+    padding: 1.5rem;
+  }
+  
+  .form-row {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+  
+  .form-group input,
+  .form-group select {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
 }

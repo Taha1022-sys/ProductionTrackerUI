@@ -20,7 +20,8 @@ const ProductionView = () => {
 
       try {
         setLoading(true);
-        const data = await productionApi.getEntryForView(Number(id));
+        // Backend'de /view endpoint'i yoksa normal endpoint'i kullan
+        const data = await productionApi.getEntryById(Number(id));
         setEntry(data);
       } catch (error) {
         console.error('Kayıt yüklenirken hata:', error);
@@ -68,7 +69,7 @@ const ProductionView = () => {
           <h3>Temel Bilgiler</h3>
           <div className="form-row">
             <div className="form-group">
-              <label>Tarih</label>
+              <label>Üretim Tarihi</label>
               <input
                 type="text"
                 value={formatDate(entry.date)}
@@ -215,6 +216,84 @@ const ProductionView = () => {
               />
             </div>
           </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Numune Forma Sayısı</label>
+              <input
+                type="text"
+                value={entry.sampleFormCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Tekrar Forma Sayısı</label>
+              <input
+                type="text"
+                value={entry.repeatFormCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Dünden Kalan Ürün Sayısı</label>
+              <input
+                type="text"
+                value={entry.yesterdayRemainingCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Eşleşmemiş Ürün Sayısı</label>
+              <input
+                type="text"
+                value={entry.unmatchedProductCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>A Kalite Ürün Sayısı</label>
+              <input
+                type="text"
+                value={entry.aQualityProductCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>İpli Ürün Sayısı</label>
+              <input
+                type="text"
+                value={entry.threadedProductCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>Lekeli Ürün Sayısı</label>
+              <input
+                type="text"
+                value={entry.stainedProductCount || 0}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              {/* Boş alan - denge için */}
+            </div>
+            <div className="form-group">
+              {/* Boş alan - denge için */}
+            </div>
+          </div>
         </div>
 
         <div className="form-section">
@@ -273,6 +352,15 @@ const ProductionView = () => {
               <input
                 type="text"
                 value={entry.countTakenFromTable}
+                readOnly
+                className="readonly-input"
+              />
+            </div>
+            <div className="form-group">
+              <label>Makinadan Alınan Sayı</label>
+              <input
+                type="text"
+                value={entry.countTakenFromMachine ?? '-'}
                 readOnly
                 className="readonly-input"
               />
@@ -353,27 +441,6 @@ const ProductionView = () => {
                   style={{minHeight: 80, resize: 'vertical', background: '#f6f8fa'}}
                 />
               </div>
-            </div>
-          </div>
-        )}
-
-        {entry.photoPath && (
-          <div className="form-section">
-            <h3>Fotoğraf</h3>
-            <div className="photo-container">
-              <img
-                src={productionApi.getPhotoUrl(entry.photoPath)}
-                alt="Üretim Fotoğrafı"
-                className="production-photo fit-window"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = 'none';
-                  const errorDiv = document.createElement('div');
-                  errorDiv.className = 'photo-error';
-                  errorDiv.textContent = 'Fotoğraf yüklenemedi';
-                  target.parentNode?.appendChild(errorDiv);
-                }}
-              />
             </div>
           </div>
         )}

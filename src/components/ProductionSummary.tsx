@@ -7,6 +7,9 @@ interface ProductionSummaryProps {
 }
 
 const ProductionSummary = ({ summary, loading }: ProductionSummaryProps) => {
+  // Debug için özet verisini konsola bas
+  console.log('ProductionSummary - summary:', summary);
+  
   if (loading) {
     return (
       <div className="production-summary-container">
@@ -61,6 +64,38 @@ const ProductionSummary = ({ summary, loading }: ProductionSummaryProps) => {
         <div className="summary-section error-breakdown">
           <h3>Hata Türlerine Göre Dağılım</h3>
           
+          <div className="error-item">
+            <div className="error-header">
+              <span className="error-name">Masa Çıkan</span>
+            </div>
+            <div className="error-details">
+              <div className="error-row">
+                <span className="label">Adet:</span>
+                <span className="value">{summary.countTakenFromTable ?? '-'}</span>
+              </div>
+              <div className="error-row">
+                <span className="label">Düzine:</span>
+                <span className="value">{summary.countTakenFromTableDozen ?? '-'}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="error-item">
+            <div className="error-header">
+              <span className="error-name">Makinadan Alınan Sayı</span>
+            </div>
+            <div className="error-details">
+              <div className="error-row">
+                <span className="label">Adet:</span>
+                <span className="value">{summary.countTakenFromMachine ?? '-'}</span>
+              </div>
+              <div className="error-row">
+                <span className="label">Düzine:</span>
+                <span className="value">{summary.countTakenFromMachineDozen ?? '-'}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="error-item">
             <div className="error-header">
               <span className="error-name">Ölçü Hatası</span>
@@ -140,6 +175,49 @@ const ProductionSummary = ({ summary, loading }: ProductionSummaryProps) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="summary-section">
+          <h3>Masa ve Makine Karşılaştırması</h3>
+          <div className="summary-row">
+            <div className="summary-item">
+              <span className="label">Masa Çıkan Sayı (Adet):</span>
+              <span className="value">{summary.countTakenFromTable?.toLocaleString() || '-'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="label">Masa Çıkan Sayı (Düzine):</span>
+              <span className="value">{summary.countTakenFromTableDozen?.toLocaleString() || '-'}</span>
+            </div>
+          </div>
+          <div className="summary-row">
+            <div className="summary-item">
+              <span className="label">Makinadan Alınan Sayı (Adet):</span>
+              <span className="value">{summary.countTakenFromMachine?.toLocaleString() || '-'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="label">Makinadan Alınan Sayı (Düzine):</span>
+              <span className="value">{summary.countTakenFromMachineDozen?.toLocaleString() || '-'}</span>
+            </div>
+          </div>
+          {summary.countTakenFromTable && summary.countTakenFromMachine && (
+            <div className="summary-row">
+              <div className="summary-item">
+                <span className="label">Fark (Adet):</span>
+                <span className={`value ${(summary.countTakenFromMachine - summary.countTakenFromTable) >= 0 ? 'positive' : 'negative'}`}>
+                  {(summary.countTakenFromMachine - summary.countTakenFromTable).toLocaleString()}
+                </span>
+              </div>
+              <div className="summary-item">
+                <span className="label">Fark Oranı:</span>
+                <span className={`value ${(summary.countTakenFromMachine - summary.countTakenFromTable) >= 0 ? 'positive' : 'negative'}`}>
+                  {summary.countTakenFromTable > 0 
+                    ? `${(((summary.countTakenFromMachine - summary.countTakenFromTable) / summary.countTakenFromTable) * 100).toFixed(2)}%`
+                    : '-'
+                  }
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="summary-section overall-error">

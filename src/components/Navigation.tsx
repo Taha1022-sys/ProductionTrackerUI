@@ -7,17 +7,27 @@ const Navigation = () => {
   return (
     <nav className="navigation">
       <div className="nav-container">
+        {/* Dashboard geçici olarak devre dışı
+        <Link 
+          to="/dashboard" 
+          className={`nav-link ${location.pathname === '/dashboard' ? 'active' : ''}`}
+        >
+          📊 Dashboard
+        </Link>
+        */}
+        
         <Link 
           to="/" 
           className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
         >
-          Ana Sayfa
+          ➕ Veri Girişi
         </Link>
+        
         <Link 
-          to="/history" 
-          className={`nav-link ${location.pathname === '/history' ? 'active' : ''}`}
+          to="/records" 
+          className={`nav-link ${location.pathname === '/records' ? 'active' : ''}`}
         >
-          Geçmiş Kayıtlar
+          📋 Kayıt Listesi
         </Link>
       </div>
     </nav>

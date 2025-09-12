@@ -1,12 +1,19 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:5197/api';
+const API_BASE_URL ='http://localhost:5002/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
+});
+
+api.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+  return config;
 });
 
 export interface ProductionEntry {
@@ -26,6 +33,13 @@ export interface ProductionEntry {
   packagesPerBag?: number;
   bagsPerBox?: number;
   tableTotalPackage: number;
+  sampleFormCount: number;
+  repeatFormCount: number;
+  yesterdayRemainingCount: number;
+  unmatchedProductCount: number;
+  aQualityProductCount: number;
+  threadedProductCount: number;
+  stainedProductCount: number;
   measurementError: number;
   knittingError: number;
   toeDefect: number;
@@ -33,12 +47,12 @@ export interface ProductionEntry {
   totalDefects: number;
   remainingOnTableCount?: number;
   countTakenFromTable: number;
+  countTakenFromMachine: number;
   measurementErrorRate: number;
   knittingErrorRate: number;
   toeDefectRate: number;
   otherDefectRate: number;
   generalErrorRate: number;
-  photoPath?: string;
   createdAt: string;
   updatedAt?: string;
   canEdit?: boolean;
@@ -63,12 +77,20 @@ export interface ProductionEntryDto {
   packagesPerBag?: number;
   bagsPerBox?: number;
   tableTotalPackage: number;
+  sampleFormCount: number;
+  repeatFormCount: number;
+  yesterdayRemainingCount: number;
+  unmatchedProductCount: number;
+  aQualityProductCount: number;
+  threadedProductCount: number;
+  stainedProductCount: number;
   measurementError: number;
   knittingError: number;
   toeDefect: number;
   otherDefect: number;
   remainingOnTableCount?: number;
   countTakenFromTable: number;
+  countTakenFromMachine: number;
 }
 
 export interface ProductionEntryUpdateDto {
@@ -87,13 +109,20 @@ export interface ProductionEntryUpdateDto {
   packagesPerBag?: number;
   bagsPerBox?: number;
   tableTotalPackage: number;
+  sampleFormCount: number;
+  repeatFormCount: number;
+  yesterdayRemainingCount: number;
+  unmatchedProductCount: number;
+  aQualityProductCount: number;
+  threadedProductCount: number;
+  stainedProductCount: number;
   measurementError: number;
   knittingError: number;
   toeDefect: number;
   otherDefect: number;
   remainingOnTableCount?: number;
   countTakenFromTable: number;
-  deleteCurrentPhoto?: boolean;
+  countTakenFromMachine: number;
 }
 
 export interface EditabilityCheckDto {
@@ -122,57 +151,67 @@ export interface ProductionSummary {
   otherDefectDozen: number;
   otherDefectRate: number;
   overallErrorRate: number;
+  remainingOnTableCount?: number;
+  remainingOnTableCountDozen?: number;
+  countTakenFromTable?: number;
+  countTakenFromTableDozen?: number;
+  countTakenFromMachine?: number;
+  countTakenFromMachineDozen?: number;
   calculatedAt: string;
 }
 
+// Backend'den gelen sayfalı veri yapısı
+export interface PaginatedResponse<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// Backend'den gelen özet liste yapısı
+export interface ProductionEntrySummary {
+  id: number;
+  date: string;
+  machineNo: string;
+  shift: number;
+  modelNo: number;
+  totalPackages: number;
+  generalErrorRate: number;
+  createdAt: string;
+}
+
+// Backend'den gelen istatistik yapısı
+export interface ProductionStatistics {
+  totalEntries: number;
+  averageErrorRate: number;
+  topMachines: Array<{ machineNo: string; count: number }>;
+  monthlyProduction: Array<{ month: string; count: number }>;
+}
+
 export const productionApi = {
-  createEntry: async (entry: ProductionEntryDto, photo?: File): Promise<ProductionEntry> => {
-    const formData = new FormData();
-    Object.keys(entry).forEach(key => {
-      const value = entry[key as keyof ProductionEntryDto];
-      if (value !== undefined && value !== null) {
-        formData.append(key, value.toString());
-      }
-    });
-    if (photo) {
-      formData.append('photo', photo);
+  createEntry: async (entry: ProductionEntryDto): Promise<ProductionEntry> => {
+    console.log('API createEntry - URL:', `${API_BASE_URL}/production/entries`);
+    console.log('API createEntry - Entry data:', entry);
+    try {
+      const response = await api.post('/production/entries', entry);
+      console.log('API createEntry - Response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API createEntry - Error:', error);
+      throw error;
     }
-    console.log('API call with FormData');
-    const response = await api.post('/production/entries', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
   },
 
-  updateEntry: async (id: number, entry: ProductionEntryUpdateDto, photo?: File): Promise<ProductionEntry> => {
-    const formData = new FormData();
-    Object.keys(entry).forEach(key => {
-      const value = entry[key as keyof ProductionEntryUpdateDto];
-      if (value !== undefined && value !== null) {
-        formData.append(key, value.toString());
-      }
-    });
-    if (photo) {
-      formData.append('photo', photo);
-    }
-    console.log('API update call with FormData');
-    const response = await api.put(`/production/entries/${id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+  updateEntry: async (id: number, entry: ProductionEntryUpdateDto): Promise<ProductionEntry> => {
+    console.log('API update call with JSON');
+    console.log('Entry data:', entry);
+    const response = await api.put(`/production/entries/${id}`, entry);
     return response.data;
   },
 
   checkEditability: async (id: number): Promise<EditabilityCheckDto> => {
     const response = await api.get(`/production/entries/${id}/editability`);
-    return response.data;
-  },
-
-  getAllEntries: async (): Promise<ProductionEntry[]> => {
-    const response = await api.get('/production/entries');
     return response.data;
   },
 
@@ -186,11 +225,6 @@ export const productionApi = {
     return response.data;
   },
 
-  getEntriesByDateRange: async (startDate: string, endDate: string, filterBy: string = 'date'): Promise<ProductionEntry[]> => {
-    const response = await api.get(`/production/entries/date-range?startDate=${startDate}&endDate=${endDate}&filterBy=${filterBy}`);
-    return response.data;
-  },
-
   getCurrentSummary: async (): Promise<ProductionSummary> => {
     const response = await api.get('/production/summary');
     return response.data;
@@ -201,10 +235,86 @@ export const productionApi = {
     return response.data;
   },
 
-  getPhotoUrl: (photoPath: string): string => {
-    if (photoPath.startsWith('/uploads/')) {
-      return `${API_BASE_URL.replace('/api', '')}${photoPath}`;
+  // Yeni Backend API Endpoint'leri
+
+  // Sayfalı veri listeleme
+  getEntries: async (
+    page: number = 1,
+    pageSize: number = 10,
+    id?: string,
+    machineNo?: string,
+    shift?: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<PaginatedResponse<ProductionEntry>> => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString()
+    });
+    
+    console.log('API getEntries - Parameters:', { id, machineNo, shift, startDate, endDate });
+    
+    if (id) params.append('id', id);
+    if (machineNo) params.append('machineNo', machineNo);
+    if (shift) params.append('shift', shift.toString());
+    if (startDate) params.append('startDate', startDate);
+    if (endDate) params.append('endDate', endDate);
+
+    console.log('API getEntries - URL:', `${API_BASE_URL}/production/entries?${params.toString()}`);
+    
+    try {
+      const response = await api.get(`/production/entries?${params.toString()}`);
+      console.log('API getEntries - Response:', response.data);
+      
+      // Backend'den gelen response format'ını frontend format'ına dönüştür
+      if (response.data.data && response.data.pagination) {
+        const result = {
+          items: response.data.data,
+          totalCount: response.data.pagination.totalCount,
+          pageNumber: response.data.pagination.currentPage,
+          pageSize: response.data.pagination.pageSize,
+          totalPages: response.data.pagination.totalPages
+        };
+        console.log('API getEntries - Formatted result:', result);
+        return result;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('API getEntries - Error:', error);
+      throw error;
     }
-    return `${API_BASE_URL.replace('/api', '')}/uploads/production-photos/${photoPath}`;
+  },
+
+  // Özet liste
+  getEntriesSummary: async (): Promise<ProductionEntrySummary[]> => {
+    const response = await api.get('/production/entries/summary');
+    return response.data;
+  },
+
+  // İstatistikler
+  getStatistics: async (): Promise<ProductionStatistics> => {
+    const response = await api.get('/production/statistics');
+    return response.data;
+  },
+
+  // Makine listesi
+  getMachines: async (): Promise<string[]> => {
+    const response = await api.get('/production/machines');
+    return response.data;
+  },
+
+  // Excel dosyasını indir
+  downloadExcel: async (): Promise<Blob> => {
+    const response = await api.get('/production/entries/export/excel', {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+
+  // Excel dosyasının konumunu öğren
+  getExcelPath: async (): Promise<{ path: string }> => {
+    const response = await api.get('/production/entries/excel-path');
+    return response.data;
   },
 };
