@@ -2,11 +2,12 @@
 
 import { excelService } from '../services/excelService';
 import { productionApi } from '../services/api';
+import { ProductionEntryDto } from '../services/api';
 
 // Örnek 1: Yeni Kayıt Ekleme (Backend Excel'e otomatik kaydeder)
 export async function addNewProductionEntry() {
   try {
-    const newEntry = {
+    const newEntry: ProductionEntryDto = {
       date: new Date().toISOString(),
       machineNo: 'M001',
       mkCycleSpeed: 100,
@@ -34,7 +35,8 @@ export async function addNewProductionEntry() {
       toeDefect: 0,
       otherDefect: 1,
       remainingOnTableCount: 5,
-      countTakenFromTable: 95
+      countTakenFromTable: 95,
+      countTakenFromMachine: 100 // HATA 1 ÇÖZÜMÜ: Eksik özellik eklendi
     };
 
     // Backend'e kaydet (otomatik olarak Excel dosyasına da kaydeder)
