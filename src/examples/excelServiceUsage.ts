@@ -1,10 +1,7 @@
-// Excel Service Backend Entegrasyonu Kullanım Örnekleri
-
 import { excelService } from '../services/excelService';
 import { productionApi } from '../services/api';
-import { ProductionEntryDto } from '../services/api';
+import type { ProductionEntryDto } from '../services/api'; 
 
-// Örnek 1: Yeni Kayıt Ekleme (Backend Excel'e otomatik kaydeder)
 export async function addNewProductionEntry() {
   try {
     const newEntry: ProductionEntryDto = {
@@ -36,7 +33,7 @@ export async function addNewProductionEntry() {
       otherDefect: 1,
       remainingOnTableCount: 5,
       countTakenFromTable: 95,
-      countTakenFromMachine: 100 // HATA 1 ÇÖZÜMÜ: Eksik özellik eklendi
+      countTakenFromMachine: 100 
     };
 
     // Backend'e kaydet (otomatik olarak Excel dosyasına da kaydeder)
@@ -51,6 +48,7 @@ export async function addNewProductionEntry() {
   }
 }
 
+// ... (dosyanın geri kalanı aynı)
 // Örnek 2: Sayfalı Veri Listeleme
 export async function listProductionEntries() {
   try {
@@ -166,5 +164,5 @@ export async function runAllExamples() {
   await getSummaryData();
   await listProductionEntries();
   await getExcelLocation();
-  
+
 }
