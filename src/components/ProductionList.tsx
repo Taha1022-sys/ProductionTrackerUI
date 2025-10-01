@@ -44,9 +44,8 @@ const ProductionList: React.FC = () => {
         const initialResponse = await productionApi.getEntries(
           1,
           10,
-          undefined,
           filters.machineNo || undefined,
-          filters.shift && filters.shift !== '' ? Number(filters.shift) : undefined,
+          filters.shift && filters.shift !== '' ? filters.shift : undefined,
           filters.startDate || undefined,
           filters.endDate || undefined
         );
@@ -55,9 +54,8 @@ const ProductionList: React.FC = () => {
         response = await productionApi.getEntries(
           1,
           initialResponse.totalCount || 1000, // Güvenli bir üst limit
-          undefined,
           filters.machineNo || undefined,
-          filters.shift && filters.shift !== '' ? Number(filters.shift) : undefined,
+          filters.shift && filters.shift !== '' ? filters.shift : undefined,
           filters.startDate || undefined,
           filters.endDate || undefined
         );
@@ -66,9 +64,8 @@ const ProductionList: React.FC = () => {
         response = await productionApi.getEntries(
           page,
           pageSize,
-          undefined,
           filters.machineNo || undefined,
-          filters.shift && filters.shift !== '' ? Number(filters.shift) : undefined,
+          filters.shift && filters.shift !== '' ? filters.shift : undefined,
           filters.startDate || undefined,
           filters.endDate || undefined
         );
