@@ -237,13 +237,12 @@ export const productionApi = {
 
   // Yeni Backend API Endpoint'leri
 
-  // Sayfalı veri listeleme
+  // Sayfalı veri listeleme - HATA ÇÖZÜMÜ: shift parametresi string olarak tanımlandı
   getEntries: async (
     page: number = 1,
     pageSize: number = 10,
-    id?: string,
     machineNo?: string,
-    shift?: number,
+    shift?: string,  // number'dan string'e değiştirildi
     startDate?: string,
     endDate?: string
   ): Promise<PaginatedResponse<ProductionEntry>> => {
@@ -252,11 +251,10 @@ export const productionApi = {
       pageSize: pageSize.toString()
     });
     
-    console.log('API getEntries - Parameters:', { id, machineNo, shift, startDate, endDate });
+    console.log('API getEntries - Parameters:', { machineNo, shift, startDate, endDate });
     
-    if (id) params.append('id', id);
     if (machineNo) params.append('machineNo', machineNo);
-    if (shift) params.append('shift', shift.toString());
+    if (shift) params.append('shift', shift);  // artık .toString() gerekmez
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
 
