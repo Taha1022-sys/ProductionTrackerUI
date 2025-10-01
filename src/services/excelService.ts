@@ -50,16 +50,15 @@ class ExcelService {
     endDate?: string
   ): Promise<ApiPaginatedResponse<ProductionEntry>> {
     try {
-      // HATA ÇÖZÜMÜ: shift parametresini string'e çevir
-      const shiftString = shift !== undefined ? shift.toString() : undefined;
-      return await productionApi.getEntries(page, pageSize, machineNo, shiftString, startDate, endDate);
+    
+      return await productionApi.getEntries(page, pageSize, machineNo, shift, startDate, endDate);
     } catch (error) {
       console.error('Backend\'den veri yüklenirken hata:', error);
       throw new Error('Veriler backend\'den yüklenirken bir hata oluştu');
     }
   }
 
-  // Backend'den özet listesi yükle
+
   async loadSummaryFromBackend(): Promise<ApiProductionEntrySummary[]> {
     try {
       return await productionApi.getEntriesSummary();
@@ -69,7 +68,7 @@ class ExcelService {
     }
   }
 
-  // Backend'den istatistikleri yükle
+  
   async loadStatisticsFromBackend(): Promise<ApiProductionStatistics> {
     try {
       return await productionApi.getStatistics();
@@ -165,8 +164,7 @@ class ExcelService {
   // Kayıtları temizle - Backend API kullanıyor
   async clearAllRecords(): Promise<void> {
     try {
-      // Backend'de tüm kayıtları silme endpoint'i yoksa, bu metot kullanılmamalı
-      // Güvenlik nedeniyle bu özellik backend'de implement edilmelidir
+   
       console.warn('Tüm kayıtları silme işlemi backend\'de implement edilmelidir');
       throw new Error('Bu işlem şu anda desteklenmiyor');
     } catch (error) {
@@ -175,7 +173,7 @@ class ExcelService {
     }
   }
 
-  // Kayıt sayısını getir - Backend API kullanıyor
+
   async getRecordCount(): Promise<number> {
     try {
       const stats = await this.loadStatisticsFromBackend();
