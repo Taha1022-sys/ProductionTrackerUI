@@ -50,8 +50,9 @@ class ExcelService {
     endDate?: string
   ): Promise<ApiPaginatedResponse<ProductionEntry>> {
     try {
-      // HATA 2 ÇÖZÜMÜ: shift parametresi doğrudan number olarak gönderiliyor.
-      return await productionApi.getEntries(page, pageSize, machineNo, shift, startDate, endDate);
+      // HATA ÇÖZÜMÜ: shift parametresini string'e çevir
+      const shiftString = shift !== undefined ? shift.toString() : undefined;
+      return await productionApi.getEntries(page, pageSize, machineNo, shiftString, startDate, endDate);
     } catch (error) {
       console.error('Backend\'den veri yüklenirken hata:', error);
       throw new Error('Veriler backend\'den yüklenirken bir hata oluştu');
