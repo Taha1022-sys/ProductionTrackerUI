@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL ='https://production-tracker-taha-aee2bubdg9hyg9g6.francecentral-01.azurewebsites.net';
+const API_BASE_URL ='https://production-tracker-taha-aee2bubdg9hyg9g6.francecentral-01.azurewebsites.net/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
