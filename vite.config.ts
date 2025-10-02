@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/api': {
-        target: 'https://production-tracker-taha-aee2bubdg9hyg9g6.francecentral-01.azurewebsites.net/index.html',
+        target: 'https://production-tracker-taha-aee2bubdg9hyg9g6.francecentral-01.azurewebsites.net',
         changeOrigin: true,
         secure: false,
       },
